@@ -113,7 +113,7 @@ export const BuyStatusSuccess = () => {
       <div className="text-center space-y-5">
         <h1 className="font-bold text-2xl">Buy Request Received</h1>
         <p className="text-xs text-slate-500">
-          Once your NGN has been received your wallet will be funded.
+          Once your funds have been received your wallet will be funded.
         </p>
       </div>
 
