@@ -5,181 +5,208 @@ import {
   stablesOptions,
   AllStablesLimits,
   AllStablesReceiver,
-  AllCurrencySellFees,
 } from "@/constant/constant";
+import { getPaymentMethodsByCurrency } from "@/constant/paymentRails";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRampContext } from "@/contexts/ramp.context";
 import { useSellContext } from "@/contexts/sell.context";
-import { useSellRatesContext } from "@/contexts/sellRates";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { requestSellQuoteAction } from "@/actions/quote.actions";
 import { Input } from "@/components/ui/input";
-
 import {
   Listbox,
   ListboxButton,
   ListboxOption,
   ListboxOptions,
 } from "@headlessui/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CheckIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import clsx from "clsx";
 import Image from "next/image";
 
-type SortedCurrency =
-  | {
-      value: string;
-      label: string;
-      img: string;
-    }[]
-  | any;
+type SortedCurrency = {
+  value: string;
+  label: string;
+  img: string;
+}[];
 
 export const SellMain = ({ session_email }: { session_email: string }) => {
-  // Get list of receiving currencies based on Stable selected
+  // Quote state - initially null until quote is fetched
+  const [rate, setRate] = useState<number | null>(null);
+  const [receiveAmount, setReceiveAmount] = useState<number | null>(null);
+  const [quoteState, setQuoteState] = useState<"idle" | "loading" | "ready">("idle");
+  const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const [sendAsset, setSendAsset] = useState(stablesOptions[0]);
+  const [sendAmount, setSendAmount] = useState(20);
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
 
-  const sortedReceiveCurrencies: SortedCurrency = AllStablesReceiver.filter(
-    (item) => item.stable === sendAsset.value
-  )?.find((item) => item.stable === sendAsset.value)?.currencies;
+  const [isPending, startTransition] = useTransition();
 
-  const [rate, setRate] = useState(1);
-  const [fees, setFees] = useState(0);
-  const [receiveAsset, setReceiveAsset] = useState(sortedReceiveCurrencies[1]);
-  const [sendAmount, setSendAmount] = useState(30.0);
-  const [receiveAmount, setReceiveAmount] = useState(0.0);
-
-  const { sellRates } = useSellRatesContext();
   const { rampData, setRampData } = useRampContext();
   const { sellData, setSellData } = useSellContext();
   const router = useRouter();
-  let calcFee = 0;
+  const searchParams = useSearchParams();
 
-  // Params from URL
-  let businessParam = useSearchParams().get("business_id");
-  let businessTidParam = useSearchParams().get("business_tid");
-  let orderIdParam = useSearchParams().get("order_id");
-  let amountParam = useSearchParams().get("amount");
-  let sendAssetParam = useSearchParams().get("send_asset") as string;
-  let receiveAssetParam = useSearchParams().get("receive_asset") as string;
-  let paymentTypeParam = useSearchParams().get("payment_type");
+  // Get list of receiving currencies based on Stable selected
+  const sortedReceiveCurrencies: SortedCurrency = AllStablesReceiver.filter(
+    (item) => item.stable === sendAsset.value
+  )?.find((item) => item.stable === sendAsset.value)?.currencies || [];
+
+  const [receiveAsset, setReceiveAsset] = useState(sortedReceiveCurrencies[0] || { value: "ngn", label: "NGN", img: "/assets/svg/fiat/ngn.svg" });
 
   const findOption = stablesOptions.find(
     (option) => option?.value === sendAsset.value
   );
-  const reference = Math.floor(Math.random() * 10000000000);
 
-  // Get rate conversion list based of Currency selected
-  let selectedCurVal: any = sellRates?.filter(
-    (item) => item.currency === sendAsset.value
-  )[0]?.rates[0 as any];
-
-  const getCurrencyRates = () => {
-    if (selectedCurVal === undefined) {
-      // setRate();
-      return;
-    } else {
-      const matchingCurrencies = Object.entries(selectedCurVal)
-        .filter(
-          ([currency]) =>
-            currency?.toUpperCase() === receiveAsset.value.toUpperCase()
-        )
-        .map(([currency, rate]) => ({ currency, rate }));
-      setRate(matchingCurrencies[0].rate as number);
-    }
+  const generateReference = () => {
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    const prefix = letters.charAt(Math.floor(Math.random() * 26)) +
+                   letters.charAt(Math.floor(Math.random() * 26)) +
+                   letters.charAt(Math.floor(Math.random() * 26));
+    const num1 = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+    const num2 = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+    const suffix = letters.charAt(Math.floor(Math.random() * 26)) +
+                   letters.charAt(Math.floor(Math.random() * 26)) +
+                   letters.charAt(Math.floor(Math.random() * 26));
+    return `${prefix}-${num1}-${num2}-${suffix}`;
   };
 
-  // Get Currency input limit list based of Currency selected
+  const reference = generateReference();
+
+  // Get payment methods for selected receive currency
+  const paymentMethods = getPaymentMethodsByCurrency(receiveAsset?.value);
+
+  // Determine if current payment method is bank transfer
+  const isBankTransfer = paymentMethod?.includes("bank_transfer");
+
+  // Get Currency input limit list based of Stable selected
   const selectedCurLimits: any = AllStablesLimits.filter(
     (item) => item.currency === sendAsset.value
   )?.find((item) => item.currency === sendAsset.value)?.limit[0];
 
-  // Get fee conversion list based of Currency selected
-  const selectedCurFee: any = AllCurrencySellFees.filter(
-    (item) => item.currency === sendAsset.value
-  )?.find((item) => item.currency === sendAsset.value)?.fees[0];
+  // Cap send amount at maximum
+  useEffect(() => {
+    if (selectedCurLimits && sendAmount > selectedCurLimits?.maximumBuy) {
+      setSendAmount(Number(selectedCurLimits?.maximumBuy));
+    }
+  }, [sendAmount, selectedCurLimits]);
 
-  const getCurrencyFees = () => {
-    const matchingCurrencies = Object.entries(selectedCurFee)
-      .filter(
-        ([currency]) =>
-          currency.toUpperCase() === receiveAsset.value.toUpperCase()
-      )
-      .map(([currency, rate]) => ({ currency, rate }));
+  // Reset quote when inputs change
+  useEffect(() => {
+    setQuoteState("idle");
+    setRate(null);
+    setReceiveAmount(null);
+    setQuoteId(null);
+    setError(null);
+  }, [sendAmount, sendAsset, receiveAsset, paymentMethod]);
 
-    setFees(matchingCurrencies[0].rate as number);
-  };
+  // Reset payment method when receive currency changes
+  useEffect(() => {
+    setPaymentMethod("");
+  }, [receiveAsset]);
 
-  const handleSendAmount = () => {
-    let receiveAmount = 0;
-    let fee = 0;
-    if (receiveAsset.value === "ngn") {
-      const amountInNgn = Number(sendAmount) * rate;
+  // Update receive asset when send asset changes (to get correct currency options)
+  useEffect(() => {
+    const newCurrencies = AllStablesReceiver.filter(
+      (item) => item.stable === sendAsset.value
+    )?.find((item) => item.stable === sendAsset.value)?.currencies || [];
 
-      if (Number(amountInNgn) >= 10000 && Number(amountInNgn) <= 10000000) {
-        calcFee = amountInNgn * 0.01;
+    if (newCurrencies.length > 0) {
+      setReceiveAsset(newCurrencies[0]);
+    }
+  }, [sendAsset]);
+
+  // Handle quote request
+  const handleRequestQuote = () => {
+    if (!paymentMethod || !sendAmount) {
+      setError("Please select a payment method");
+      return;
+    }
+
+    if (sendAmount < selectedCurLimits?.minimum) {
+      setError(`Minimum amount is ${selectedCurLimits?.minimum} ${sendAsset?.label}`);
+      return;
+    }
+
+    setQuoteState("loading");
+    setError(null);
+
+    startTransition(async () => {
+      const result = await requestSellQuoteAction({
+        amount: sendAmount,
+        send_asset: sendAsset.value,
+        receive_asset: receiveAsset.value.toUpperCase(),
+        payment_method: paymentMethod,
+      });
+
+      if (result.status === 200 && result?.rate && result?.payout_amount) {
+        setQuoteId(result.quote_id || null);
+        setRate(result.rate);
+        setReceiveAmount(result.payout_amount);
+        setQuoteState("ready");
+      } else {
+        setError(result.message || "Failed to get quote");
+        setQuoteState("idle");
       }
-      calcFee <= 650 ? (fee = calcFee + 110) : (fee = 760);
-      receiveAmount = Math.round(amountInNgn - fee);
-    } else {
-      const beforeFee = Number(sendAmount) * rate;
-      calcFee = beforeFee * (0.5 / 100);
-      receiveAmount = beforeFee - calcFee;
-    }
-    const receiveAmountFixed = receiveAmount.toFixed(2);
-
-    return setReceiveAmount(Number(receiveAmountFixed));
+    });
   };
 
-  const getSendToken = stablesOptions?.find(
-    (option) => option?.value === sendAsset.value
-  );
-
-  useEffect(() => {
-    if (sendAmount > selectedCurLimits.maximumBuy) {
-      setSendAmount(Number(selectedCurLimits.maximumBuy));
-    }
-  }, [sendAmount, receiveAsset]);
-
-  useEffect(() => {
-    getCurrencyFees();
-    handleSendAmount();
-  }, [handleSendAmount]);
-
-  useEffect(() => {
-    getCurrencyRates();
-  }, [selectedCurVal, handleSendAmount]);
-
-  useEffect(() => {
-    handleSendAmount();
-  }, [sendAmount, sendAsset, receiveAsset, rate, fees]);
-
+  // Handle continue - navigate to next step
   const handleContinue = () => {
+    if (!session_email) {
+      const callbackUrl = encodeURIComponent(
+        window.location.pathname + window.location.search
+      );
+      window.location.href = `/auth/login?callbackUrl=${callbackUrl}`;
+      return;
+    }
+
+    if (quoteState !== "ready" || !quoteId) {
+      setError("Please get a quote first");
+      return;
+    }
+
+    // Store data in contexts
     setRampData({
       ...rampData,
-      send_asset: getSendToken?.label as string,
+      send_asset: sendAsset.label,
       receive_asset: receiveAsset.value,
       send_amount: sendAmount,
-      receive_amount: receiveAmount,
-      business_id: businessParam || "56781285",
-      payment_type: paymentTypeParam as string,
-      order_id: orderIdParam as string,
-      business_tid: businessTidParam as string,
-      merchant_fee: fees,
+      receive_amount: receiveAmount!,
+      merchant_fee: 0,
       rate: String(rate),
-      reference: reference.toString(),
+      reference: reference,
     });
+
     setSellData({
       ...sellData,
       network: findOption?.network as string,
+      quote_id: quoteId,
+      payment_method: isBankTransfer ? "bank_transfer" : "mobile_money",
     });
 
-    return router.push("/sell/receiver");
+    router.push("/sell/recipient");
   };
+
+  // URL params handling
+  const amountParam = searchParams.get("amount");
+  const sendAssetParam = searchParams.get("send_asset");
+  const receiveAssetParam = searchParams.get("receive_asset");
 
   const findSendOption = stablesOptions?.find(
     (option) => option?.value === sendAssetParam
   );
 
   const findReceiveOption = sortedReceiveCurrencies?.find(
-    (option: any) => option?.value === receiveAssetParam
+    (option) => option?.value === receiveAssetParam
   );
 
   useEffect(() => {
@@ -210,8 +237,45 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
     }
   }, []);
 
+  // Determine button state and action
+  const isButtonDisabled =
+    !session_email ||
+    sendAmount < (selectedCurLimits?.minimum || 0) ||
+    (quoteState === "idle" && !paymentMethod) ||
+    quoteState === "loading";
+
+  const handleButtonClick = () => {
+    if (!session_email) {
+      const callbackUrl = encodeURIComponent(
+        window.location.pathname + window.location.search
+      );
+      window.location.href = `/auth/login?callbackUrl=${callbackUrl}`;
+      return;
+    }
+
+    if (quoteState === "ready") {
+      handleContinue();
+    } else if (quoteState === "idle") {
+      handleRequestQuote();
+    }
+  };
+
+  const getButtonText = () => {
+    if (!session_email) return "Sign in to continue";
+    if (quoteState === "loading") return "Calculating";
+    if (quoteState === "ready") return "Continue";
+    return "Request quote";
+  };
+
   return (
-    <form action={handleContinue} className="flex flex-col gap-y-5">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleButtonClick();
+      }}
+      className="flex flex-col gap-y-4"
+    >
+      {/* You send (USDC) */}
       <div>
         <label htmlFor="You send" className="text-sm text-slate-500">
           You send
@@ -221,7 +285,7 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
             <Input
               type="tel"
               name="send_amount"
-              placeholder="10000"
+              placeholder="30"
               className="outline-none py-1 number-input font-semibold border-none text-lg ring-0 focus-visible:ring-0"
               value={sendAmount}
               onChange={(e) => {
@@ -291,8 +355,10 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
         </div>
       </div>
 
+
+      {/* You receive (Fiat) */}
       <div>
-        <label htmlFor="You send" className="text-sm text-slate-500">
+        <label htmlFor="You receive" className="text-sm text-slate-500">
           You receive
         </label>
         <div className="relative bg-slate-100 py-1 rounded-lg flex items-center space-x-1 justify-center">
@@ -300,12 +366,12 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
             <Input
               type="tel"
               name="receive_amount"
-              placeholder="0.00"
+              placeholder=""
               className={clsx(
                 "outline-none py-1 number-input font-semibold border-none text-lg ring-0 focus-visible:ring-0",
-                sendAmount < selectedCurLimits.minimum && "text-rose-600"
+                sendAmount < (selectedCurLimits?.minimum || 0) && "text-rose-600"
               )}
-              value={receiveAmount}
+              value={receiveAmount !== null ? receiveAmount.toLocaleString() : ""}
               readOnly
             />
           </div>
@@ -348,7 +414,7 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
                 "transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0"
               )}
             >
-              {sortedReceiveCurrencies.map((option: SortedCurrency) => (
+              {sortedReceiveCurrencies.map((option) => (
                 <ListboxOption
                   key={option.value}
                   value={option}
@@ -372,26 +438,70 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
         </div>
       </div>
 
+      {/* Payment Method */}
+      {paymentMethods.length > 0 && (
+        <div>
+          <label htmlFor="payment_method" className="text-sm text-slate-500">
+            Payment method
+          </label>
+          <Select
+            value={paymentMethod}
+            onValueChange={(value) => setPaymentMethod(value)}
+          >
+            <SelectTrigger className="w-full outline-none bg-slate-100 py-5 rounded-lg border-none text-base">
+              <SelectValue placeholder="Select payment method" />
+            </SelectTrigger>
+            <SelectContent>
+              {paymentMethods.map((method) => (
+                <SelectItem key={method.value} value={method.value}>
+                  {method.method}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Exchange rate */}
       <div className="bg-slate-100 py-3 font-medium space-y-2 rounded-lg text-xs px-4">
         <div className="flex items-center justify-between">
           <p>Exchange rate</p>
           <p>
-            1 {findOption?.label} = {rate} {receiveAsset?.value.toUpperCase()}
+            {rate !== null
+              ? `1 ${sendAsset?.label} = ${rate} ${receiveAsset?.value.toUpperCase()}`
+              : "---"}
           </p>
         </div>
-        {/* <div className="flex items-center justify-between">
-          <p>Merchant fee</p>
-          <p>{fees}%</p>
-        </div> */}
       </div>
 
-      <div className="my-20">
+      {/* Error message */}
+      {error && (
+        <div className="text-rose-600 text-sm text-center">{error}</div>
+      )}
+
+      {/* Submit button */}
+      <div className="my-16">
         <button
           type="submit"
-          disabled={sendAmount < selectedCurLimits.minimum ? true : false}
-          className={`${sendAmount < selectedCurLimits.minimum ? "cursor-not-allowed bg-primary opacity-50" : "cursor-pointer bg-primary opacity-100"} text-base text-white flex items-center justify-center p-2 btn_position rounded-md`}
+          disabled={isButtonDisabled}
+          className={clsx(
+            "text-base text-white flex items-center justify-center p-2 btn_position rounded-md",
+            isButtonDisabled
+              ? "cursor-not-allowed bg-primary opacity-50"
+              : "cursor-pointer bg-primary opacity-100"
+          )}
         >
-          {session_email ? "Sell Stables" : "Sign in to continue"}
+          {isPending || quoteState === "loading" ? (
+            <Image
+              src="/assets/progress_activity.svg"
+              alt="progress_activity"
+              className="animate-spin"
+              width={24}
+              height={24}
+            />
+          ) : (
+            getButtonText()
+          )}
         </button>
       </div>
     </form>

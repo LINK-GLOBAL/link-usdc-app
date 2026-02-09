@@ -16,6 +16,8 @@ type SellProps = {
   pix_key?: string;
   interac?: string;
   network?: string;
+  quote_id?: string;
+  payment_method?: string;
 };
 
 type SellContextProp = {
@@ -36,6 +38,8 @@ export default function SellContextProvider({ children }: SellContextType) {
     pix_key: "",
     interac: "",
     network: "",
+    quote_id: "",
+    payment_method: "",
   });
 
   return (

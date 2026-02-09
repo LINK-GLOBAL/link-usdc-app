@@ -26,7 +26,7 @@ export const Navbar = ({
         </button>
 
         {/* Centered title */}
-        <p className="font-medium text-lg absolute left-1/2 transform -translate-x-1/2">
+        <p className="font-medium text-md absolute left-1/2 transform -translate-x-1/2">
           {title}
         </p>
 

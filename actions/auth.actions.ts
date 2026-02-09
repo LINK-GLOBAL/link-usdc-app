@@ -63,6 +63,8 @@ export const validate2FACode = async (
 
     // After successful sign-in, get the session to access user data
     const session = await auth();
+    console.log("current session", session);
+
     const user = session?.user;
 
     // Parse callbackUrl to get type param
