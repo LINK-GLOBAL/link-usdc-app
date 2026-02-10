@@ -92,6 +92,26 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
     (item) => item.currency === sendAsset.value
   )?.find((item) => item.currency === sendAsset.value)?.limit[0];
 
+  // Persist URL params to SellContext on mount
+  useEffect(() => {
+    const type = searchParams.get("type");
+    const assetCode = searchParams.get("assetCode");
+    const transactionId = searchParams.get("transaction_id");
+    const token = searchParams.get("token");
+    const wallet = searchParams.get("wallet");
+
+    if (type || assetCode || transactionId || token || wallet) {
+      setSellData((prev) => ({
+        ...prev,
+        transaction_type: type || prev.transaction_type || "",
+        asset_code: assetCode || prev.asset_code || "",
+        transaction_id: transactionId || prev.transaction_id || "",
+        token: token || prev.token || "",
+        wallet_address: wallet || prev.wallet_address || "",
+      }));
+    }
+  }, [searchParams, setSellData]);
+
   // Cap send amount at maximum
   useEffect(() => {
     if (selectedCurLimits && sendAmount > selectedCurLimits?.maximumBuy) {
@@ -191,6 +211,7 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
       network: findOption?.network as string,
       quote_id: quoteId,
       payment_method: isBankTransfer ? "bank_transfer" : "mobile_money",
+
     });
 
     router.push("/sell/recipient");

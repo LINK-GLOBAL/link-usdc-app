@@ -18,6 +18,13 @@ type SellProps = {
   network?: string;
   quote_id?: string;
   payment_method?: string;
+  wallet_address?: string;
+
+   // URL params (from external integrations)
+  transaction_type?: string;
+  asset_code?: string;
+  transaction_id?: string;
+  token?: string;
 };
 
 type SellContextProp = {
@@ -40,6 +47,11 @@ export default function SellContextProvider({ children }: SellContextType) {
     network: "",
     quote_id: "",
     payment_method: "",
+    wallet_address: "",
+    transaction_type: "",
+    asset_code: "",
+    transaction_id: "",
+    token: "",
   });
 
   return (

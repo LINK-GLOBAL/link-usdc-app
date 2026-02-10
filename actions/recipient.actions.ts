@@ -9,6 +9,7 @@ export interface Recipient {
   customer_id: string;
   currency: string;
   payment_method: string;
+  payout_id: string;
   // Bank details
   bank_name?: string;
   account_number?: string;
@@ -18,6 +19,7 @@ export interface Recipient {
   name?: string;
   // Provider/network info
   provider?: string;
+  payment_type?: string;
   created_at?: string;
 }
 
@@ -99,5 +101,51 @@ export const createRecipientAction = async (
     return result;
   } catch (error: any) {
     return { status: 400, message: error?.message || "Failed to create recipient" };
+  }
+};
+
+// Confirm Withdraw Request - for offramp flow
+export interface ConfirmWithdrawRequest {
+  quote_id: string;
+  payout_id: string;
+  currency: string;
+  send_amount: number;
+  address: string;
+}
+
+export interface ConfirmWithdrawResponse {
+  status: number;
+  message?: string;
+  transaction_id?: string;
+  ticket_id?: string;
+}
+
+export const confirmWithdrawAction = async (
+  payload: ConfirmWithdrawRequest
+): Promise<ConfirmWithdrawResponse> => {
+  const session = await auth();
+
+  if (!session?.user?.customerId) {
+    return { status: 401, message: "Unauthorized" };
+  }
+
+  try {
+    const response = await fetch(`${server}/onchain/direct_offramp_request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_id: session.user.customerId,
+        quote_id: payload.quote_id,
+        payout_id: payload.payout_id,
+        currency: payload.currency,
+        send_amount: payload.send_amount,
+        address: payload.address,
+      }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    return { status: 400, message: error?.message || "Failed to confirm withdraw" };
   }
 };

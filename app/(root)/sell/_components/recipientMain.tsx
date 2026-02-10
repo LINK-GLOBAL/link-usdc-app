@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useRampContext } from "@/contexts/ramp.context";
 import { useSellContext } from "@/contexts/sell.context";
-import { fetchRecipientsAction, Recipient } from "@/actions/recipient.actions";
+import { fetchRecipientsAction, confirmWithdrawAction, Recipient } from "@/actions/recipient.actions";
 import Image from "next/image";
 import clsx from "clsx";
 
@@ -17,6 +17,7 @@ export const RecipientMain = ({ userId }: RecipientMainProps) => {
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const { rampData } = useRampContext();
   const { sellData, setSellData } = useSellContext();
@@ -29,7 +30,6 @@ export const RecipientMain = ({ userId }: RecipientMainProps) => {
       setError(null);
 
       const result = await fetchRecipientsAction();
-      // console.log("Recipients", result.recipients);
 
       if (result.status === 200 && result.recipients) {
         // Filter recipients by the selected currency
@@ -56,18 +56,39 @@ export const RecipientMain = ({ userId }: RecipientMainProps) => {
     }
   }, [userId, rampData?.receive_asset]);
 
-  // Handle continue - save selected recipient to context and navigate
+  // Handle continue - call confirmWithdrawAction then navigate
   const handleContinue = () => {
     if (!selectedRecipient) return;
 
-    setSellData({
-      ...sellData,
-      bank_name: selectedRecipient.bank_name || "",
-      account_number: selectedRecipient.account_number || "",
-      account_name: selectedRecipient.account_name || selectedRecipient.name || "",
-    });
+    setError(null);
 
-    router.push("/sell/send");
+    startTransition(async () => {
+      // Save recipient to context
+      setSellData({
+        ...sellData,
+        bank_name: selectedRecipient.bank_name || "",
+        account_number: selectedRecipient.account_number || "",
+        account_name: selectedRecipient.account_name || selectedRecipient.name || "",
+      });
+
+      // Call confirmWithdrawAction
+      const result = await confirmWithdrawAction({
+        quote_id: sellData.quote_id || "",
+        payout_id: selectedRecipient.payout_id,
+        currency: rampData?.receive_asset?.toUpperCase() || "",
+        send_amount: rampData?.send_amount || 0,
+        address: sellData.wallet_address || "",
+      });
+
+      console.log("Withdraw result:", result);
+
+      if (result.status === 200) {
+        // Navigate to success page
+        router.push("/sell/status/success");
+      } else {
+        setError(result.message || "Failed to confirm withdrawal");
+      }
+    });
   };
 
   // Handle add new recipient
@@ -118,11 +139,11 @@ export const RecipientMain = ({ userId }: RecipientMainProps) => {
       </div>
 
       {/* Error message */}
-      {/* {error && (
+      {error && (
         <div className="text-rose-600 text-sm text-center bg-rose-50 p-2 rounded">
           {error}
         </div>
-      )} */}
+      )}
 
       {/* No recipients - show Add recipient button */}
       {recipients.length === 0 && (
@@ -226,15 +247,25 @@ export const RecipientMain = ({ userId }: RecipientMainProps) => {
           <button
             type="button"
             onClick={recipients.length === 0 ? handleAddRecipient : handleContinue}
-            disabled={recipients.length > 0 && !selectedRecipient}
+            disabled={(recipients.length > 0 && !selectedRecipient) || isPending}
             className={clsx(
-              "w-full py-3 text-white font-medium rounded-lg transition-colors",
-              recipients.length > 0 && !selectedRecipient
+              "w-full py-3 text-white font-medium rounded-lg transition-colors flex items-center justify-center",
+              (recipients.length > 0 && !selectedRecipient) || isPending
                 ? "bg-primary/50 cursor-not-allowed"
                 : "bg-primary hover:bg-primary/90"
             )}
           >
-            Continue
+            {isPending ? (
+              <Image
+                src="/assets/progress_activity.svg"
+                alt="loading"
+                className="animate-spin"
+                width={24}
+                height={24}
+              />
+            ) : (
+              "Continue"
+            )}
           </button>
         </div>
       )}

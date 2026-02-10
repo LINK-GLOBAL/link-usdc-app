@@ -1,38 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { useBuyContext } from "@/contexts/buy.context";
 import { useRampContext } from "@/contexts/ramp.context";
+import { useSellContext } from "@/contexts/sell.context";
 import { anchorUrl } from "@/www";
 import Image from "next/image";
 import axios from "axios";
 
-export const BuyStatusSuccess = () => {
-  const { buyData } = useBuyContext();
+export const SellStatusSuccess = () => {
   const { rampData } = useRampContext();
+  const { sellData } = useSellContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // console.log("BuyStatusSuccess - buyData:", buyData);
-  // console.log("BuyStatusSuccess - rampData:", rampData);
-
-  // Extract from BuyContext
+  // Extract from SellContext
   const {
     transaction_type: type,
     asset_code: assetCode,
     transaction_id: transactionId,
-    sender_identifier: senderIdentifier,
     token,
-  } = buyData;
+    account_name: accountName,
+  } = sellData;
 
   // Extract from RampContext
-  const { send_amount: sendAmount, merchant_fee: fee, reference, receive_amount: receiveAmount } = rampData;
+  const {
+    send_amount: sendAmount,
+    receive_amount: receiveAmount,
+    merchant_fee: fee,
+    reference,
+  } = rampData;
 
   // Generate base64 hash of reference
   const Hex = reference
     ? Buffer.from(String(reference), "utf8").toString("base64")
     : "";
-
 
   // SEP-24 config
   const config = {
@@ -50,13 +51,12 @@ export const BuyStatusSuccess = () => {
       hashed: Hex,
       callback: "postmessage",
       externalId: reference,
-      account: senderIdentifier,
+      account: accountName,
     },
   };
 
   // Button click handler - executes SEP-24 completion
   const handleDoneClick = async () => {
-    // console.log("Done clicked - token:", token, "transactionId:", transactionId, "type:", type);
     setError(null);
 
     if (!token || !transactionId || !type) {
@@ -67,13 +67,10 @@ export const BuyStatusSuccess = () => {
 
     setIsLoading(true);
     try {
-      // console.log("Making SEP-24 completion request to:", `${anchorUrl}/transactions/${type}/interactive/complete`);
       const data = await axios.get(
         `${anchorUrl}/transactions/${type}/interactive/complete`,
         config
       );
-
-      // console.log("SEP-24 response:", data);
 
       if (data.status === 200) {
         // postMessage to parent if in popup
@@ -93,7 +90,6 @@ export const BuyStatusSuccess = () => {
         }, 2000);
       }
     } catch (err: any) {
-    //  console.error("SEP-24 completion error:", err);
       setError(err?.message || "Failed to complete request");
       setIsLoading(false);
     }
@@ -111,9 +107,9 @@ export const BuyStatusSuccess = () => {
       </div>
 
       <div className="text-center space-y-5">
-        <h1 className="font-bold text-2xl">Buy Request Received</h1>
+        <h1 className="font-bold text-2xl">Sell Request Received</h1>
         <p className="text-xs text-slate-500">
-          Once your funds have been received your wallet will be funded.
+          Once your {rampData?.send_asset || "USDC"} has been received, your payout will be processed.
         </p>
       </div>
 
@@ -123,7 +119,7 @@ export const BuyStatusSuccess = () => {
         </div>
       )}
 
-      <div className="my-10 px-4 my-8">
+      <div className="my-10 px-4">
         <button
           type="button"
           onClick={handleDoneClick}

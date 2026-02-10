@@ -8,7 +8,9 @@ export default async function Recipient() {
   return (
     <main>
       <Navbar route="/sell" title="Receiver's details" />
-      <RecipientMain userId={session?.user?.id || ""} />
+      <RecipientMain
+        userId={session?.user?.id || ""}
+      />
     </main>
   );
 }
