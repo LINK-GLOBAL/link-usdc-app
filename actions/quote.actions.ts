@@ -84,6 +84,7 @@ export const confirmQuoteAction = async (
       }),
     });
 
+
     const result = await response.json();
     return result;
   } catch (error: any) {
@@ -99,6 +100,7 @@ export interface ConfirmDepositRequest {
   network: string;
   memo?: string;
   ticket_id: string;
+  transaction_id?: string;
 }
 
 export interface ConfirmDepositResponse {
@@ -123,6 +125,7 @@ export const confirmDepositAction = async (
         network: payload.network,
         memo: payload.memo,
         ticket_id: payload.ticket_id,
+        transaction_id: payload.transaction_id,
       }),
     });
 

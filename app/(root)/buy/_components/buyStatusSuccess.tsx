@@ -13,9 +13,6 @@ export const BuyStatusSuccess = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // console.log("BuyStatusSuccess - buyData:", buyData);
-  // console.log("BuyStatusSuccess - rampData:", rampData);
-
   // Extract from BuyContext
   const {
     transaction_type: type,

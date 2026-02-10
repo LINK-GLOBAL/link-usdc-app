@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRampContext } from "@/contexts/ramp.context";
 import { useSellContext } from "@/contexts/sell.context";
 import { anchorUrl } from "@/www";
@@ -13,6 +13,16 @@ export const SellStatusSuccess = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!error) return;
+
+    const timer = setTimeout(() => {
+      setError(null);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [error]);
+
   // Extract from SellContext
   const {
     transaction_type: type,
@@ -20,6 +30,7 @@ export const SellStatusSuccess = () => {
     transaction_id: transactionId,
     token,
     account_name: accountName,
+    account_number: accountNumber,
   } = sellData;
 
   // Extract from RampContext
@@ -51,7 +62,7 @@ export const SellStatusSuccess = () => {
       hashed: Hex,
       callback: "postmessage",
       externalId: reference,
-      account: accountName,
+      account: `${accountName} ${accountNumber}`,
     },
   };
 

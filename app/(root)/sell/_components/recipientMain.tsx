@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useRampContext } from "@/contexts/ramp.context";
 import { useSellContext } from "@/contexts/sell.context";
-import { fetchRecipientsAction, confirmWithdrawAction, Recipient } from "@/actions/recipient.actions";
+import { fetchRecipientsAction,  createPendingWithdrawAction, Recipient } from "@/actions/recipient.actions";
 import Image from "next/image";
 import clsx from "clsx";
 
@@ -58,38 +58,40 @@ export const RecipientMain = ({ userId }: RecipientMainProps) => {
 
   // Handle continue - call confirmWithdrawAction then navigate
   const handleContinue = () => {
-    if (!selectedRecipient) return;
+  if (!selectedRecipient) return;
 
-    setError(null);
+  setError(null);
 
-    startTransition(async () => {
-      // Save recipient to context
-      setSellData({
-        ...sellData,
-        bank_name: selectedRecipient.bank_name || "",
-        account_number: selectedRecipient.account_number || "",
-        account_name: selectedRecipient.account_name || selectedRecipient.name || "",
-      });
-
-      // Call confirmWithdrawAction
-      const result = await confirmWithdrawAction({
-        quote_id: sellData.quote_id || "",
-        payout_id: selectedRecipient.payout_id,
-        currency: rampData?.receive_asset?.toUpperCase() || "",
-        send_amount: rampData?.send_amount || 0,
-        address: sellData.wallet_address || "",
-      });
-
-      console.log("Withdraw result:", result);
-
-      if (result.status === 200) {
-        // Navigate to success page
-        router.push("/sell/status/success");
-      } else {
-        setError(result.message || "Failed to confirm withdrawal");
-      }
+  startTransition(async () => {
+    // Save recipient to context
+    setSellData({
+      ...sellData,
+      bank_name: selectedRecipient.bank_name || "",
+      account_number: selectedRecipient.account_number || "",
+      account_name: selectedRecipient.account_name || selectedRecipient.name || "",
     });
-  };
+
+    // Create PENDING withdrawal (does NOT trigger payout)
+    const result = await createPendingWithdrawAction({
+      reference: rampData.reference || "",
+      quote_id: sellData.quote_id || "",
+      payout_id: selectedRecipient.payout_id,
+      rate: rampData.rate,
+      currency: rampData?.receive_asset?.toUpperCase() || "",
+      send_amount: rampData?.send_amount || 0,
+      receive_amount: rampData?.receive_amount || 0,
+      address: sellData.wallet_address || "",
+      transaction_id: sellData.transaction_id || "",
+    });
+
+    if (result.status === 200) {
+      // Navigate to success page (which will redirect to anchor)
+      router.push("/sell/status/success");
+    } else {
+      setError(result.message || "Failed to create pending withdrawal");
+    }
+  });
+};
 
   // Handle add new recipient
   const handleAddRecipient = () => {

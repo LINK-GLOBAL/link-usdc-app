@@ -99,6 +99,7 @@ export const MakePayment = () => {
       network: buyData.network,
       memo: buyData.stellar_memo || undefined,
       ticket_id: rampData.order_id,
+      transaction_id: buyData.transaction_id,
     });
     // console.log("Confirm deposit result", result);
 

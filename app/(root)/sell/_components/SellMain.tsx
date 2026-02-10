@@ -79,7 +79,8 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
     return `${prefix}-${num1}-${num2}-${suffix}`;
   };
 
-  const reference = generateReference();
+  const ref_id = generateReference();
+  const reference = ref_id.toString();
 
   // Get payment methods for selected receive currency
   const paymentMethods = getPaymentMethodsByCurrency(receiveAsset?.value);
