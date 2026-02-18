@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { KycRails, getIdTypesByCountry } from "@/constant/paymentRails";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -38,8 +39,16 @@ export const IDMain = ({
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
 
+  const [country, setCountry] = useState("");
+  const [countryCode, setCountryCode] = useState("");
   const [idType, setIdType] = useState(userIdType || "");
   const [name, setName] = useState(userName || "");
+
+  const idTypes = getIdTypesByCountry(countryCode);
+
+  useEffect(() => {
+    setIdType("");
+  }, [countryCode]);
 
   const navigate = useRouter();
 
@@ -73,6 +82,8 @@ export const IDMain = ({
     await kycActions({
       id_type: idType,
       id_number: event?.get("id_number") as string,
+      country,
+      country_code: countryCode,
     })
       .then(async (data) => {
         if (data.status === 400) return setError(data?.message);
@@ -127,23 +138,53 @@ export const IDMain = ({
   if (needsKyc) {
     return (
       <form>
-        <h2 className="text-center text-lg font-semibold mb-4">Fill KYC details below</h2>
+        <h2 className="text-center text-md font-semibold m-4">Fill KYC details below</h2>
         <FormError message={error} />
         <FormSuccess message={success} />
 
         <div className="space-y-5 mt-5">
           <div>
+            <label htmlFor="country" className="text-sm text-slate-500">
+              Country
+            </label>
+            <Select
+              onValueChange={(value) => {
+                const selected = KycRails.find((r) => r.country_code === value);
+                setCountryCode(value);
+                setCountry(selected?.country || "");
+              }}
+              required
+            >
+              <SelectTrigger className="w-full outline-none bg-slate-100 py-5 rounded-md border-none text-base">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {KycRails.map((r) => (
+                  <SelectItem key={r.country_code} value={r.country_code}>
+                    {r.country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <label htmlFor="id_type" className="text-sm text-slate-500">
               ID Type
             </label>
-            <Select onValueChange={(value) => setIdType(value)} required>
+            <Select
+              onValueChange={(value) => setIdType(value)}
+              disabled={!countryCode}
+              required
+            >
               <SelectTrigger className="w-full outline-none bg-slate-100 py-5 rounded-md border-none text-base">
                 <SelectValue placeholder="" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="bvn">BVN</SelectItem>
-                <SelectItem value="nin">NIN</SelectItem>
-                <SelectItem value="vin">Voters Card</SelectItem>
+                {idTypes.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

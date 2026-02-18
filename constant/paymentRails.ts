@@ -89,3 +89,45 @@ export const getPaymentMethodsByCurrency = (currency: string) => {
   );
   return rail?.paymentMethods || [];
 };
+
+export const KycRails = [
+  {
+    country: "Nigeria",
+    country_code: "ng",
+    id_types: [
+      { label: "BVN", value: "bvn" },
+      { label: "NIN", value: "nin" },
+    ],
+  },
+  {
+    country: "Kenya",
+    country_code: "ke",
+    id_types: [
+      { label: "NIN", value: "nin" },
+      { label: "Passport Number", value: "pn" },
+    ],
+  },
+  {
+    country: "Ghana",
+    country_code: "gh",
+    id_types: [
+      { label: "Passport Number", value: "pn" },
+      { label: "Driver's Licence", value: "dl" },
+    ],
+  },
+  {
+    country: "South Africa",
+    country_code: "za",
+    id_types: [
+      { label: "NIN", value: "nin" },
+    ],
+  },
+];
+
+// Helper to get ID types by country_code
+export const getIdTypesByCountry = (country_code: string) => {
+  const rail = KycRails.find(
+    (r) => r.country_code.toLowerCase() === country_code.toLowerCase()
+  );
+  return rail?.id_types || [];
+};

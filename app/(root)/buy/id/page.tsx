@@ -31,8 +31,8 @@ export default async function Identification({
     <main>
       <Navbar route="/menu" title="Identification" />
       <div className="bg-p-light p-2 rounded-md flex">
-        <span className="material-icons-round block text-primary">info</span>
-        <p className="text-primary text-[9px]">
+        {/* <span className="material-icons-round block text-primary">info</span> */}
+        <p className="text-primary text-[10px]">
           Ensure the identification details provided are accurate.
         </p>
       </div>

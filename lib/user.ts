@@ -65,7 +65,9 @@ export const resend2FA = async (email: string) => {
 export const sendKYC = async (
   id_type: string,
   id_number: string,
-  id: string
+  id: string,
+  country: string,
+  country_code: string
 ) => {
   const request = await fetch(`${server}/onchain/customer-kyc`, {
     method: "POST",
@@ -76,6 +78,8 @@ export const sendKYC = async (
       idType: id_type,
       idNumber: id_number,
       customer_id: id,
+      country,
+      country_code,
     }),
   });
 

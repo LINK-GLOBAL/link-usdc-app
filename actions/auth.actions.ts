@@ -24,16 +24,22 @@ export const logoutActions = async () => {
 export const kycActions = async ({
   id_type,
   id_number,
+  country,
+  country_code,
 }: {
   id_type: string;
   id_number: string;
+  country: string;
+  country_code: string;
 }) => {
   const session = await auth();
 
   const response = await sendKYC(
     id_type,
     id_number,
-    session?.user?.id as string
+    session?.user?.id as string,
+    country,
+    country_code
   );
 
   return response;
