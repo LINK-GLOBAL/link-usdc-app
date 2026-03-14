@@ -112,7 +112,7 @@ export const KycRails = [
     country_code: "gh",
     id_types: [
       { label: "Passport Number", value: "pn" },
-      { label: "Driver's Licence", value: "dl" },
+      // { label: "Driver's Licence", value: "dl" },
     ],
   },
   {
