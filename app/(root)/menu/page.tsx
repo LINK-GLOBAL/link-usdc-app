@@ -10,7 +10,7 @@ import { LoginButton } from "./_components/LoginButton";
 export default async function Menu({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; [key: string]: string | undefined }>;
+  searchParams: Promise<{ type?: string; returnTo?: string; [key: string]: string | undefined }>;
 }) {
   const session = await auth();
   const params = await searchParams;
@@ -43,7 +43,7 @@ export default async function Menu({
 
   return (
     <main className="grid gap-y-2">
-      <MenuNavbar />
+      <MenuNavbar returnTo={params.returnTo} />
 
       {session?.user?.id ? (
         <div>

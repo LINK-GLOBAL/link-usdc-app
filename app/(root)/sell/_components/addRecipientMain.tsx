@@ -19,6 +19,11 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import clsx from "clsx";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 export const AddRecipientMain = () => {
   const { rampData } = useRampContext();
@@ -34,6 +39,7 @@ export const AddRecipientMain = () => {
   // Form state
   const [currency, setCurrency] = useState(rampData?.receive_asset?.toUpperCase() || "NGN");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [recipientType, setRecipientType] = useState<"first_party" | "third_party">("first_party");
 
   // Bank details
   const [bankName, setBankName] = useState("");
@@ -154,6 +160,7 @@ export const AddRecipientMain = () => {
       const result = await createRecipientAction({
         currency: currency.toUpperCase(),
         payment_method: paymentMethod,
+        recipient_type: recipientType,
         bank_name: isBankTransfer ? bankName : undefined,
         account_number: isBankTransfer ? accountNumber : undefined,
         account_name: isBankTransfer ? accountName : undefined,
@@ -209,6 +216,39 @@ export const AddRecipientMain = () => {
             {rampData?.receive_amount?.toLocaleString()} {rampData?.receive_asset?.toUpperCase()}
           </h2>
         </div>
+      </div>
+
+      {/* Recipient type */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <Select
+            value={recipientType}
+            onValueChange={(value) => setRecipientType(value as "first_party" | "third_party")}
+          >
+            <SelectTrigger className="w-full outline-none bg-slate-100 py-5 rounded-md border-none text-base">
+              <SelectValue placeholder="Select recipient type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="first_party">My Account</SelectItem>
+              <SelectItem value="third_party">Others</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="text-slate-400 hover:text-slate-600 transition-colors shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="text-sm space-y-2" side="top">
+            <p><span className="font-semibold">My Account</span> — You are paying into your own bank account. The payout goes directly to you.</p>
+            <p><span className="font-semibold">Others</span> — Third-party payout. The funds are sent to someone else's account.</p>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3 p-2">
@@ -361,30 +401,28 @@ export const AddRecipientMain = () => {
         )}
 
         {/* Submit button */}
-        <div className="pt-4">
-          <button
-            type="submit"
-            disabled={!isFormValid() || isPending}
-            className={clsx(
-              "w-full py-3 text-white font-medium rounded-md transition-colors flex items-center justify-center",
-              !isFormValid() || isPending
-                ? "bg-primary/50 cursor-not-allowed"
-                : "bg-primary hover:bg-primary/90"
-            )}
-          >
-            {isPending ? (
-              <Image
-                src="/assets/progress_activity.svg"
-                alt="loading"
-                className="animate-spin"
-                width={24}
-                height={24}
-              />
-            ) : (
-              "Continue"
-            )}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={!isFormValid() || isPending}
+          className={clsx(
+            "btn_position text-white font-medium rounded-md transition-colors flex items-center justify-center py-3",
+            !isFormValid() || isPending
+              ? "bg-primary/50 cursor-not-allowed"
+              : "bg-primary hover:bg-primary/90"
+          )}
+        >
+          {isPending ? (
+            <Image
+              src="/assets/progress_activity.svg"
+              alt="loading"
+              className="animate-spin"
+              width={24}
+              height={24}
+            />
+          ) : (
+            "Continue"
+          )}
+        </button>
       </form>
     </div>
   );

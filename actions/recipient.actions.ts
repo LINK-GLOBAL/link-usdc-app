@@ -32,6 +32,7 @@ export interface FetchRecipientsResponse {
 export interface CreateRecipientRequest {
   currency: string;
   payment_method: string;
+  recipient_type?: string;
   // Bank details
   bank_name?: string;
   account_number?: string;
@@ -88,6 +89,7 @@ export const createRecipientAction = async (
         customer_id: session.user.customerId,
         currency: payload.currency,
         payment_method: payload.payment_method,
+        destination: payload.recipient_type,
         bank_name: payload.bank_name,
         account_number: payload.account_number,
         account_name: payload.account_name,

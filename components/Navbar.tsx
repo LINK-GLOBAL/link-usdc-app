@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export const Navbar = ({
   route,
@@ -11,7 +11,13 @@ export const Navbar = ({
   title?: string;
 }) => {
   const path = usePathname();
+  const searchParams = useSearchParams();
   const navigate = useRouter();
+
+  // Build menu href with current URL as returnTo
+  const currentSearch = searchParams.toString();
+  const currentUrl = currentSearch ? `${path}?${currentSearch}` : path;
+  const menuHref = `/menu?returnTo=${encodeURIComponent(currentUrl)}`;
 
   // If route and title are provided, show centered title with back arrow
   if (route && title) {
@@ -32,7 +38,7 @@ export const Navbar = ({
 
         {/* Menu button */}
         <Link
-          href="/menu"
+          href={menuHref}
           className="bg-p-light text-primary flex items-center justify-center rounded-full p-1.5"
         >
           <span className="material-icons-round">menu</span>
@@ -72,7 +78,7 @@ export const Navbar = ({
       {title && !route && <p className="font-medium text-lg">{title}</p>}
 
       <Link
-        href="/menu"
+        href={menuHref}
         className="bg-p-light text-primary flex items-center justify-center rounded-full p-1.5"
       >
         <span className="material-icons-round">menu</span>
@@ -81,14 +87,17 @@ export const Navbar = ({
   );
 };
 
-export const MenuNavbar = () => {
+export const MenuNavbar = ({ returnTo }: { returnTo?: string }) => {
   const navigate = useRouter();
+  // Validate returnTo is a safe relative path
+  const isValidReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//");
+  const destination = isValidReturnTo ? returnTo : "/sell";
   return (
     <nav className="flex items-center justify-between mb-5">
       <p className="font-medium">Menu</p>
 
       <div
-        onClick={() => navigate.back()}
+        onClick={() => navigate.push(destination)}
         className="bg-p-light text-primary cursor-pointer flex items-center justify-center rounded-full p-1.5"
       >
         <span className="material-icons-round">close</span>

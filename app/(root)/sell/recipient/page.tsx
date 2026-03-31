@@ -7,7 +7,7 @@ export default async function Recipient() {
 
   return (
     <main>
-      <Navbar route="/sell" title="Receiver's details" />
+      <Navbar route="/sell" title="Payout account" />
       <RecipientMain
         userId={session?.user?.id || ""}
       />

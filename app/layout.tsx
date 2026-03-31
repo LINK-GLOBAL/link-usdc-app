@@ -35,13 +35,15 @@ export default function RootLayout({
 
         <div className="container" id="ramp-container">
           <div className="aspect-ratio">
-                <InitContextProvider>
-                  <RampContextProvider>
-                    <BuyContextProvider>
-                      <SellContextProvider>{children}</SellContextProvider>
-                    </BuyContextProvider>
-                  </RampContextProvider>
-                </InitContextProvider>
+            <div className="h-full overflow-y-auto py-5 px-6 pb-28 scrollbar">
+              <InitContextProvider>
+                <RampContextProvider>
+                  <BuyContextProvider>
+                    <SellContextProvider>{children}</SellContextProvider>
+                  </BuyContextProvider>
+                </RampContextProvider>
+              </InitContextProvider>
+            </div>
             <Footer />
           </div>
         </div>

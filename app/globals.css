@@ -10,15 +10,15 @@ body {
 }
 
 .container {
-  @apply flex items-center  justify-center w-[430px] h-screen;
+  @apply flex items-center justify-center w-full max-w-[430px] h-screen mx-auto;
 }
 
 .aspect-ratio {
-  @apply relative bg-white shadow-lg rounded-3xl w-full h-[560px] py-5 px-6;
+  @apply relative bg-white shadow-lg rounded-3xl w-full h-[560px] overflow-hidden;
 }
 
 .btn_position {
-  @apply absolute bottom-14 right-0 max-w-80 left-0 mx-auto;
+  @apply absolute bottom-14 left-[8%] right-[8%];
 }
 
 /* Chrome, Safari, Edge, Opera */

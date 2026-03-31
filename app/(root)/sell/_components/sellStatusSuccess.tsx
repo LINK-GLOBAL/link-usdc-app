@@ -130,26 +130,24 @@ export const SellStatusSuccess = () => {
         </div>
       )}
 
-      <div className="my-10 px-4">
-        <button
-          type="button"
-          onClick={handleDoneClick}
-          disabled={isLoading}
-          className="bg-primary text-base text-white flex items-center justify-center p-3 w-full rounded-md disabled:opacity-50"
-        >
-          {isLoading ? (
-            <Image
-              src="/assets/progress_activity.svg"
-              alt="loading"
-              className="animate-spin"
-              width={24}
-              height={24}
-            />
-          ) : (
-            "Done"
-          )}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleDoneClick}
+        disabled={isLoading}
+        className="btn_position bg-primary text-base text-white flex items-center justify-center p-3 rounded-md disabled:opacity-50"
+      >
+        {isLoading ? (
+          <Image
+            src="/assets/progress_activity.svg"
+            alt="loading"
+            className="animate-spin"
+            width={24}
+            height={24}
+          />
+        ) : (
+          "Done"
+        )}
+      </button>
     </section>
   );
 };

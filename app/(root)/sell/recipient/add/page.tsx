@@ -7,7 +7,7 @@ export default async function AddRecipientPage() {
 
   return (
     <main>
-      <Navbar route="/sell/recipient" title="Receiver's Account" />
+      <Navbar route="/sell/recipient" title="Payout Account" />
       <AddRecipientMain />
     </main>
   );

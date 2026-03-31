@@ -7,7 +7,7 @@ export default async function page() {
 
   return (
     <main>
-      <Navbar route="/menu" title="Order history" />
+      <Navbar route="/sell" title="Order history" />
 
       <History transactions={response.data} />
     </main>
