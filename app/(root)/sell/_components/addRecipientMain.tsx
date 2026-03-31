@@ -230,7 +230,7 @@ export const AddRecipientMain = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="first_party">My Account</SelectItem>
-              <SelectItem value="third_party">Others</SelectItem>
+              <SelectItem value="third_party">3rd Party</SelectItem>
             </SelectContent>
           </Select>
         </div>
