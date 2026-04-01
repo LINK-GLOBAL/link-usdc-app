@@ -2,7 +2,6 @@
 
 import { Input } from "@/components/ui/input";
 import { walletValidate } from "@/actions/auth.actions";
-
 import { useBuyContext } from "@/contexts/buy.context";
 import { useRampContext } from "@/contexts/ramp.context";
 import { useRouter } from "next/navigation";
