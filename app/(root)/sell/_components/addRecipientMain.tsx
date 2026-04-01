@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useRampContext } from "@/contexts/ramp.context";
 import { useSellContext } from "@/contexts/sell.context";
@@ -96,16 +96,7 @@ export const AddRecipientMain = () => {
     setIsVerified(false);
   }, [paymentMethod]);
 
-  // Validate NGN account number
-  useEffect(() => {
-    if (currency === "NGN" && accountNumber.length === 10 && bankName) {
-      validateAccountNumber();
-    } else if (currency !== "NGN" && accountNumber.length > 0) {
-      setIsVerified(true);
-    }
-  }, [accountNumber, bankName, currency]);
-
-  const validateAccountNumber = async () => {
+  const validateAccountNumber = useCallback(async () => {
     if (!getBankCode || !('value' in getBankCode) || !getBankCode.value) return;
 
     setIsVerifying(true);
@@ -131,7 +122,23 @@ export const AddRecipientMain = () => {
     } finally {
       setIsVerifying(false);
     }
-  };
+  }, [getBankCode, accountNumber]);
+
+  // Validate NGN account number (debounced to avoid rapid API calls)
+  useEffect(() => {
+    if (currency !== "NGN") {
+      if (accountNumber.length > 0) setIsVerified(true);
+      return;
+    }
+
+    if (accountNumber.length !== 10 || !bankName) return;
+
+    const timer = setTimeout(() => {
+      validateAccountNumber();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [accountNumber, bankName, currency, validateAccountNumber]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,7 +253,7 @@ export const AddRecipientMain = () => {
           </PopoverTrigger>
           <PopoverContent className="text-sm space-y-2" side="top">
             <p><span className="font-semibold">My Account</span> — You are paying into your own bank account. The payout goes directly to you.</p>
-            <p><span className="font-semibold">Others</span> — Third-party payout. The funds are sent to someone else's account.</p>
+            <p><span className="font-semibold">Others</span> — Third-party payout. The funds are sent to someone else&apos;s account.</p>
           </PopoverContent>
         </Popover>
       </div>
