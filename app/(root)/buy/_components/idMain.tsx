@@ -102,7 +102,17 @@ export const IDMain = ({
 
     await verifyCustomerAction({ name: submittedName })
       .then(async (data) => {
-        if (data.status === "Failed") return setError(data?.message);
+        if (data.status === "Failed") {
+          // Parse error message if it's JSON string
+          let errorMessage = data?.message;
+          try {
+            const parsed = JSON.parse(errorMessage);
+            errorMessage = parsed.error || errorMessage;
+          } catch {
+            // If parsing fails, use original message
+          }
+          return setError(errorMessage);
+        }
 
         setSuccess(data?.message || "Verification successful!");
 
@@ -139,7 +149,7 @@ export const IDMain = ({
     return (
       <form>
         <h2 className="text-center text-md font-semibold m-4">Fill KYC details below</h2>
-        <FormError message={error} />
+        <FormError message={error} className="text-xs" />
         <FormSuccess message={success} />
 
         <div className="space-y-5 mt-5">
@@ -233,7 +243,7 @@ export const IDMain = ({
     return (
       <form>
         <h2 className="text-center text-lg font-semibold my-2">Verify Your details</h2>
-        <FormError message={error} />
+        <FormError message={error} className="text-xs" />
         <FormSuccess message={success} />
 
         <div className="space-y-5 mt-5">
