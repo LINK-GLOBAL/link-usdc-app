@@ -3,6 +3,33 @@
 import { auth } from "@/auth";
 import { server } from "@/www";
 
+// Public quote request — no session required. Uses GUEST_CUSTOMER_ID from env.
+export const requestPublicQuoteAction = async (
+  payload: QuoteRequest & { trx_type: "onramp" | "offramp" }
+): Promise<QuoteResponse> => {
+  const guestCustomerId = process.env.GUEST_CUSTOMER_ID;
+
+  try {
+    const response = await fetch(`${server}/onchain/request_rate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_id: guestCustomerId,
+        amount: payload.amount,
+        send_asset: payload.send_asset,
+        receive_asset: payload.receive_asset,
+        payment_method: payload.payment_method,
+        trx_type: payload.trx_type,
+      }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    return { status: 400, message: error?.message || "Failed to fetch quote" };
+  }
+};
+
 export interface QuoteRequest {
   amount: number;
   send_asset: string;

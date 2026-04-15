@@ -15,6 +15,15 @@ export default async function Menu({
   const session = await auth();
   const params = await searchParams;
 
+  // Unauthenticated users with a type param → send to pre-login converter
+  if (!session?.user?.id && (params.type === "deposit" || params.type === "withdraw")) {
+    const queryString = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+    ).toString();
+    const flow = params.type === "deposit" ? "buy" : "sell";
+    redirect(`/converter/${flow}?${queryString}`);
+  }
+
   // Auto-redirect logged-in users based on type param and verification status
   if (session?.user?.id && params.type) {
     const queryString = new URLSearchParams(

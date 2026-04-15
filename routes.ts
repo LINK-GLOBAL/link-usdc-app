@@ -11,6 +11,8 @@ export const publicRoutes = [
   "/sell/options",
   "/auth/secure",
   "/menu",
+  "/converter/buy",
+  "/converter/sell",
 ];
 
 /**
