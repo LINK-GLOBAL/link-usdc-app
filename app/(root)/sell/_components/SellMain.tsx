@@ -46,7 +46,12 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
 
   const [sendAsset, setSendAsset] = useState(stablesOptions[0]);
   const [sendAmount, setSendAmount] = useState(20);
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => {
+    const initialCurrency =
+      AllStablesReceiver.find((r) => r.stable === stablesOptions[0].value)?.currencies[0]?.value || "ngn";
+    const methods = getPaymentMethodsByCurrency(initialCurrency);
+    return methods[0]?.value || "";
+  });
 
   const [isPending, startTransition] = useTransition();
 
@@ -129,9 +134,10 @@ export const SellMain = ({ session_email }: { session_email: string }) => {
     setError(null);
   }, [sendAmount, sendAsset, receiveAsset, paymentMethod]);
 
-  // Reset payment method when receive currency changes
+  // Pre-fill payment method with first available option when receive currency changes
   useEffect(() => {
-    setPaymentMethod("");
+    const methods = getPaymentMethodsByCurrency(receiveAsset?.value);
+    setPaymentMethod(methods[0]?.value || "");
   }, [receiveAsset]);
 
   // Update receive asset when send asset changes (to get correct currency options)

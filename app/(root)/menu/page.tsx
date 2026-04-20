@@ -55,25 +55,26 @@ export default async function Menu({
       <MenuNavbar returnTo={params.returnTo} />
 
       {session?.user?.id ? (
-        <div>
-          <Link href="/history">
-            <div className="border border-slate-200 flex items-center justify-between py-1 px-2 mt-2 rounded">
-              <div className="flex items-center space-x-1">
-                <button className="bg-p-light text-primary cursor-default flex items-center justify-center rounded-full p-1.5">
-                  <span className="material-symbols-outlined">
-                    receipt_long
-                  </span>
-                </button>
-                <p className="font-medium">Transactions</p>
-              </div>
-              <button>
-                <span className="material-icons-round text-sm">
-                  arrow_forward_ios
-                </span>
-              </button>
-            </div>
-          </Link>
-        </div>
+        // <div>
+        //   <Link href="/history">
+        //     <div className="border border-slate-200 flex items-center justify-between py-1 px-2 mt-2 rounded">
+        //       <div className="flex items-center space-x-1">
+        //         <button className="bg-p-light text-primary cursor-default flex items-center justify-center rounded-full p-1.5">
+        //           <span className="material-symbols-outlined">
+        //             receipt_long
+        //           </span>
+        //         </button>
+        //         <p className="font-medium">Transactions</p>
+        //       </div>
+        //       <button>
+        //         <span className="material-icons-round text-sm">
+        //           arrow_forward_ios
+        //         </span>
+        //       </button>
+        //     </div>
+        //   </Link>
+        // </div>
+        <div></div>
       ) : (
         <div className="space-y-5">
           <div className="space-y-2">

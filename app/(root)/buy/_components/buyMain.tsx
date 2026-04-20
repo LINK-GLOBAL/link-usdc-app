@@ -42,7 +42,10 @@ export const BuyMain = ({ session_email }: { session_email: string }) => {
   const [sendAsset, setSendAsset] = useState(fiatOptions[0]);
   const [receiveAsset, setReceiveAsset] = useState(stablesOptions[0]);
   const [sendAmount, setSendAmount] = useState(20000);
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => {
+    const methods = getPaymentMethodsByCurrency(fiatOptions[0].value);
+    return methods[0]?.value || "";
+  });
   const [senderIdentifier, setSenderIdentifier] = useState<string>("");
 
   const [isPending, startTransition] = useTransition();
@@ -135,9 +138,10 @@ export const BuyMain = ({ session_email }: { session_email: string }) => {
     setError(null);
   }, [sendAmount, sendAsset, receiveAsset, paymentMethod]);
 
-  // Reset payment method and sender identifier when currency changes
+  // Pre-fill payment method with first available option when currency changes
   useEffect(() => {
-    setPaymentMethod("");
+    const methods = getPaymentMethodsByCurrency(sendAsset?.value);
+    setPaymentMethod(methods[0]?.value || "");
     setSenderIdentifier("");
   }, [sendAsset]);
 

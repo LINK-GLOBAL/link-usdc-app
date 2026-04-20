@@ -65,7 +65,13 @@ export const ConverterMain = ({
 
   // ── Shared state ───────────────────────────────────────────────
   const [sendAmount, setSendAmount] = useState(isBuy ? 20000 : 20);
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => {
+    const initialCurrency = isBuy
+      ? fiatOptions[0].value
+      : (AllStablesReceiver.find((r) => r.stable === stablesOptions[0].value)?.currencies[0]?.value || fiatOptions[0].value);
+    const methods = getPaymentMethodsByCurrency(initialCurrency);
+    return methods[0]?.value || "";
+  });
 
   // Quote
   const [quoteState, setQuoteState] = useState<"idle" | "loading" | "ready">("idle");
@@ -97,10 +103,12 @@ export const ConverterMain = ({
     setError(null);
   }, [sendAmount, sendFiatAsset, receiveStableAsset, sendStableAsset, receiveFiatAsset, paymentMethod]);
 
-  // ── Reset payment method on asset change ───────────────────────
+  // ── Pre-fill payment method with first available option on asset change ───
   useEffect(() => {
-    setPaymentMethod("");
-  }, [sendFiatAsset, receiveFiatAsset, sendStableAsset]);
+    const currency = isBuy ? sendFiatAsset.value : receiveFiatAsset.value;
+    const methods = getPaymentMethodsByCurrency(currency);
+    setPaymentMethod(methods[0]?.value || "");
+  }, [sendFiatAsset, receiveFiatAsset, sendStableAsset, isBuy]);
 
   // ── Update sell receive currencies when stable changes ──────────
   useEffect(() => {
