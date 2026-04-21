@@ -142,6 +142,7 @@ export const createPendingWithdrawAction = async (
         reference_id: payload.reference,
         user_id: session.user.id,
         customer_id: session.user.customerId,
+        user_name: session.user.name,
         quote_id: payload.quote_id,
         payout_id: payload.payout_id,
         rate: payload.rate,

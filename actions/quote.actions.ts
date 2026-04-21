@@ -146,6 +146,7 @@ export const confirmDepositAction = async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: session?.user?.id,
+        user_name: session?.user?.name,
         ref_id: payload.ref_id,
         type: payload.type,
         wallet_address: payload.wallet_address,
