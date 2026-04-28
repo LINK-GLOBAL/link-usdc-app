@@ -122,7 +122,7 @@ export const MakePayment = () => {
             info
           </span>
           <p className="text-amber-700 text-xs">
-           Ensure your request is processed by adding the REFERENCE CODE below to your transfer.
+           Ensure to add the REFERENCE CODE below to your transfer.
           </p>
         </div>
 

@@ -8,8 +8,8 @@ export default async function ProofOfPayment() {
       <div className="bg-p-light p-2 rounded-md flex space-x-1">
         <span className="material-icons-round block text-primary">info</span>
         <p className="text-primary text-[9px]">
-          Ensure the Account details provided below match the details used to
-          make Payment or initiate deposit request.
+          Ensure the Account details provided match the details used to make
+          Payment.
         </p>
       </div>
 

@@ -31,7 +31,7 @@ export default function AccountId({ params }: props) {
       <div className="bg-p-light p-2 rounded-md items-center flex space-x-1">
         <span className="material-icons-round block text-primary">info</span>
         <p className="text-primary text-[9px]">
-          Ensure you only send {directData?.asset} to this wallet address on the{" "}
+          Ensure to only send {directData?.asset} to this wallet address on the{" "}
           {getData?.network === "ethereum" ? (
             "Polygon"
           ) : (

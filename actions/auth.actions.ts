@@ -69,7 +69,7 @@ export const validate2FACode = async (
 
     // After successful sign-in, get the session to access user data
     const session = await auth();
-    console.log("current session", session);
+    // console.log("current session", session);
 
     const user = session?.user;
 
@@ -86,6 +86,8 @@ export const validate2FACode = async (
         // If URL parsing fails, use defaults
       }
     }
+
+    // console.log("Logged User", user)
 
     // Determine redirect based on verification status from session
     const isFullyVerified = user?.hasKyc && user?.verified && user?.customerId;
