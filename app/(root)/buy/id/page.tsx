@@ -29,7 +29,7 @@ export default async function Identification({
 
   return (
     <main>
-      <Navbar route="/menu" title="Identification" />
+      <Navbar title="Identification" />
       <div className="bg-p-light p-2 rounded-md flex">
         {/* <span className="material-icons-round block text-primary">info</span> */}
         <p className="text-primary text-[10px]">

@@ -54,10 +54,14 @@ export const IDMain = ({
 
   // console.log("Current", route, hasKyc, verified, customerId, userName, userIdNumber, userIdType);
 
-  // Determine which case we're in
+  // Determine which case we're in:
+  // - Fully verified: hasKyc + verified + customerId → redirect
+  // - Has KYC but not fully verified: show pre-filled verification form
+  // - No KYC: show empty form to fill in
   const isFullyVerified = hasKyc && verified && customerId;
   const needsKyc = !hasKyc;
-  const needsVerification = hasKyc && (!verified || !customerId);
+  // Any user with hasKyc=true who isn't fully verified goes to verification form
+  const needsVerification = hasKyc && !isFullyVerified;
 
   // Case C: Auto-redirect if fully verified
   useEffect(() => {
@@ -238,54 +242,56 @@ export const IDMain = ({
     );
   }
 
-  // Case B: Name verification form (has KYC but not verified/no customerId)
+  // Case B: Verification form (hasKyc=true but not fully verified)
+  // Show all KYC details pre-filled — user just confirms and clicks Verify
   if (needsVerification) {
     return (
       <form>
-        <h2 className="text-center text-lg font-semibold my-2">Verify Your details</h2>
+        <h2 className="text-center text-lg font-semibold my-2">Verify Your Identity</h2>
+        <p className="text-center text-sm text-slate-500 mb-4">
+          Your KYC details are on file. Please confirm and verify.
+        </p>
         <FormError message={error} className="text-xs" />
         <FormSuccess message={success} />
 
         <div className="space-y-5 mt-5">
-          <div>
-            <label htmlFor="name" className="text-sm text-slate-500">
-              Confirm your name
-            </label>
-            <Input
-              type="text"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="outline-none bg-slate-100 py-5 rounded-md border-none text-base"
-            />
-          </div>
-          <div>
-             <label htmlFor="id_type" className="text-sm text-slate-500">
-             Confirm your ID Type
-            </label>
-            <Input
-              type="text"
-              name="id_type"
-              value={userIdType}
-              disabled
-              required
-              className="outline-none bg-slate-100 py-5 rounded-md border-none text-base"
-            />
-          </div>
-          <div>
-            <label htmlFor="id_number" className="text-sm text-slate-500">
-              Confirm your ID number
-            </label>
-            <Input
-              type="text"
-              name="id_number"
-              value={userIdNumber}
-              disabled
-              required
-              className="outline-none bg-slate-100 py-5 rounded-md border-none text-base"
-            />
-          </div>
+          {userName && (
+            <div>
+              <label className="text-sm text-slate-500">Full name</label>
+              <Input
+                type="text"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="outline-none bg-slate-100 py-5 rounded-md border-none text-base"
+              />
+            </div>
+          )}
+          {userIdType && (
+            <div>
+              <label className="text-sm text-slate-500">ID Type</label>
+              <Input
+                type="text"
+                name="id_type"
+                value={userIdType}
+                readOnly
+                className="outline-none bg-slate-100 py-5 rounded-md border-none text-base text-slate-600 cursor-not-allowed"
+              />
+            </div>
+          )}
+          {userIdNumber && (
+            <div>
+              <label className="text-sm text-slate-500">ID Number</label>
+              <Input
+                type="text"
+                name="id_number"
+                value={userIdNumber}
+                readOnly
+                className="outline-none bg-slate-100 py-5 rounded-md border-none text-base text-slate-600 cursor-not-allowed"
+              />
+            </div>
+          )}
         </div>
 
         <div className="my-32">
@@ -306,7 +312,7 @@ export const IDMain = ({
                 height={24}
               />
             ) : (
-              "Confirm"
+              "Verify"
             )}
           </button>
         </div>
